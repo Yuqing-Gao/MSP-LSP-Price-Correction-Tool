@@ -29,6 +29,12 @@ def pre_process_folder(folder_path):
 
 
 def make_bulk_file(df, folder_path, foldername):
+    df.drop(columns=['Sales Units CP (E,C)', 'Target Price', 'Category', 'Percentage Diff', 're-price mark'],
+            inplace=True)
+    df.rename(columns={'Item': 'ITEM', 'ItemID': 'ITEM ID', 'Bundle ID': 'BUNDLE ID', 'DetailID': 'DETAIL ID',
+                       'Price CP (E,C)': 'Current Price CP (E,C)', 'Outletid': 'Outlet ID'},
+              inplace=True)
+    # 输出 bulk 文件
     df.to_excel(f"{folder_path}/{foldername}_bulk.xlsx", index=False)
 
 
@@ -151,7 +157,6 @@ class PriceProcessor:
 
 
 class FolderProcessor:
-    # 将 PriceProcessor 的全部 methods 加入 FolderProcessor ，以实现完整地遍历处理单个文件夹的功能
     def __init__(self):
         self.current_directory = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
 
@@ -163,7 +168,6 @@ class FolderProcessor:
             # 检查当前路径是否是文件夹
             if os.path.isdir(folder_path):
                 # 调用处理文件夹的方法
-
                 # pre-process the raw files (.xlsx to dataframe)
                 df = pre_process_folder(folder_path)
                 if df is None or df.empty:  # 若预处理后得到的 dataframe 为空或没有得到 dataframe，continue
@@ -206,16 +210,16 @@ class ItemMerger:
         outlet_item1 = outlet_item.copy().fillna(0)  # 将 nan 填充为 0
         outlet_item1 = outlet_item1.rename(columns={'id': 'ItemID'})  # 改名从而使两张表的 key 相同
 
-        # 去除不需要的列
+        # 改名
         if 'Productgroup' in outlet_item1:
-            outlet_item1 = outlet_item1.drop(columns="Productgroup")
+            outlet_item1.rename(columns={'Productgroup': 'PG ID'}, inplace=True)
 
         # 手动输入 PG ID 和 QC ID
         print(f"Processing {self.folder_path} now...")  # 通过当前路径得知 PG ID 和 QC ID
-        pg_id = input("please enter PG ID:")
+        # pg_id = input("please enter PG ID:")
         qc_id = input("please enter QC ID:")
-        outlet_item1.insert(0, 'PG ID', pg_id)
-        outlet_item1.insert(0, 'QC ID', qc_id)
+        # outlet_item1.insert(0, 'PG ID', pg_id)
+        outlet_item1.insert(0, 'QC ID', int(qc_id))
         return outlet_item1
 
     def merge_tables(self):
@@ -236,16 +240,3 @@ class ItemMerger:
 if __name__ == "__main__":
     folder_processor = FolderProcessor()
     folder_processor.process_all_folders()
-
-    # 获取所有处理结果
-    # .xlsx 为空的情况：
-    # Folder: D:\RealStudyfile\gfk实习\gaijia\v1\MSP_offline_extend
-    # Empty DataFrame
-    # Columns: [QC ID, PG ID, Target Price, New Price CP (E,C)]
-    # Index: []
-    # 文件夹为空的情况：
-    # Folder: D:\RealStudyfile\gfk实习\gaijia\v1\.idea
-    # None
-    # for result in folder_processor.processed_folders:
-    #     print(f"Folder: {result['folder_path']}")
-    #     print(result['processed_df'])
