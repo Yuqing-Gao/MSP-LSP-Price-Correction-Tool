@@ -4,6 +4,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sys
 
 
 def pre_process_folder(folder_path):
@@ -158,7 +159,8 @@ class PriceProcessor:
 
 class FolderProcessor:
     def __init__(self):
-        self.current_directory = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
+        # self.current_directory = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
+        self.current_directory = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
 
     def process_all_folders(self):
         # 遍历并处理当前工作目录下的所有文件夹
